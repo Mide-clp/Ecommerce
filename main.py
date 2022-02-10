@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 @app.route('/')
 def home():
-    pass
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
