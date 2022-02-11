@@ -18,61 +18,61 @@ db = SQLAlchemy(app)
 
 #################################### Database schema ##########################################
 
-class User(UserMixin, db.Model):
-    __tablename__ = "users"
-    id = ""
-    Fname = ""
-    Lname = ""
-    country = ""
-    address = ""
-    city = ""
-    postcode = ""
-    phone = ""
-    email = ""
-    password = ""
-    cart = ""
-    order = ""
-    wishlist = ""
-
-
-class Products(db.Model):
-    __tablename__ = "products"
-    id = ""
-    name = ""
-    price = ""
-    image_url = ""
-    stock = ""
-    description = ""
-    size = ""
-    cart = ""
-    number_of_products = db.Column(db.Float(3), nullable=False)
-    wishlist = ""
-
-
-class Cart(db.Model):
-    __tablename__ = "cart"
-    id = ""
-    user_id = ""
-    product_id = ""
-    product = ""
-    user = ""
-    number_of_products = db.Column(db.Float(3), nullable=False)
-
-
-class Category(db.Model):
-    __tablename__ = "categories"
-    id = ""
-    product_id = ""
-    name = ""
-    products = ""
-    pass
-
-
-class Wishlist(db.Model):
-    id = ""
-    product_id = ""
-    user_id = ""
-    products = ""
+# class User(UserMixin, db.Model):
+#     __tablename__ = "users"
+#     id = ""
+#     Fname = ""
+#     Lname = ""
+#     country = ""
+#     address = ""
+#     city = ""
+#     postcode = ""
+#     phone = ""
+#     email = ""
+#     password = ""
+#     cart = ""
+#     order = ""
+#     wishlist = ""
+#
+#
+# class Products(db.Model):
+#     __tablename__ = "products"
+#     id = ""
+#     name = ""
+#     price = ""
+#     image_url = ""
+#     stock = ""
+#     description = ""
+#     size = ""
+#     cart = ""
+#     number_of_products = db.Column(db.Float(3), nullable=False)
+#     wishlist = ""
+#
+#
+# class Cart(db.Model):
+#     __tablename__ = "cart"
+#     id = ""
+#     user_id = ""
+#     product_id = ""
+#     product = ""
+#     user = ""
+#     number_of_products = db.Column(db.Float(3), nullable=False)
+#
+#
+# class Category(db.Model):
+#     __tablename__ = "categories"
+#     id = ""
+#     product_id = ""
+#     name = ""
+#     products = ""
+#     pass
+#
+#
+# class Wishlist(db.Model):
+#     id = ""
+#     product_id = ""
+#     user_id = ""
+#     products = ""
 
 
 @app.route('/')
