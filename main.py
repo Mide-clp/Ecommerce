@@ -15,64 +15,98 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ecommerce.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 #################################### Database schema ##########################################
 
-# class User(UserMixin, db.Model):
-#     __tablename__ = "users"
-#     id = ""
-#     Fname = ""
-#     Lname = ""
-#     country = ""
-#     address = ""
-#     city = ""
-#     postcode = ""
-#     phone = ""
-#     email = ""
-#     password = ""
-#     cart = ""
-#     order = ""
-#     wishlist = ""
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    Fname = db.Column(db.String(250), nullable=True)
+    Lname = db.Column(db.String(250), nullable=True)
+    country = db.Column(db.String(250), nullable=True)
+    address = db.Column(db.String(250), nullable=True)
+    city = db.Column(db.String(250), nullable=True)
+    postcode = db.Column(db.String(250), nullable=True)
+    phone = db.Column(db.String(250), nullable=True)
+    email = db.Column(db.String(250), nullable=True, secondary_key=True)
+    password = db.Column(db.String(250), nullable=True)
+    cart = relationship("Cart", back_populates="user")
+    wishlist = relationship("Wishlist", back_populates="added_by")
+
+
+#
+
+class Products(db.Model):
+    __tablename__ = "products"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=True)
+    price = db.Column(db.Float, nullable=True)
+    image_url = db.Column(db.String(250), nullable=True)
+    stock = db.Column(db.Integer, nullable=True)
+    description = db.Column(db.String(250), nullable=True)
+    size = db.Column(db.String(250), nullable=True)
+    cart = relationship("Cart", back_populates="products")
+    # number_of_products = db.Column(db.Float(3), nullable=False)
+    wishlist = relationship("Wishlist", back_populates="products")
+    product_category = relationship("Category", back_populates="products")
+
+
+#
+class Category(db.Model):
+    __tablename__ = "categories"
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    name = db.Column(db.String(250), nullable=True)
+    products = relationship("Products", back_populates="product_category")
+
+
 #
 #
-# class Products(db.Model):
-#     __tablename__ = "products"
-#     id = ""
-#     name = ""
-#     price = ""
-#     image_url = ""
-#     stock = ""
-#     description = ""
-#     size = ""
-#     cart = ""
-#     number_of_products = db.Column(db.Float(3), nullable=False)
-#     wishlist = ""
+class Cart(db.Model):
+    __tablename__ = "cart"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    product = relationship("Products", back_populates="cart")
+    user = relationship("User", back_populates="cart")
+    number_of_products = db.Column(db.Float(3), nullable=False)
+
+
 #
 #
-# class Cart(db.Model):
-#     __tablename__ = "cart"
-#     id = ""
-#     user_id = ""
-#     product_id = ""
-#     product = ""
-#     user = ""
-#     number_of_products = db.Column(db.Float(3), nullable=False)
-#
-#
-# class Category(db.Model):
-#     __tablename__ = "categories"
-#     id = ""
-#     product_id = ""
-#     name = ""
-#     products = ""
-#     pass
-#
-#
-# class Wishlist(db.Model):
-#     id = ""
-#     product_id = ""
-#     user_id = ""
-#     products = ""
+class Wishlist(db.Model):
+    __tablename__ = "wishlists"
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    products = relationship("Products", back_populates="wishlist")
+    added_by = relationship("User", back_populates="wishlist")
+
+
+db.create_all()
+
+
+@app.route('/add', methods=["GET", "POST"])
+def add_product():
+    if request.method == "POST":
+        name = request.form["name"]
+        price = request.form["price"]
+        stock = request.form["stock"]
+        size = request.form["size"]
+        description = request.form["desc"]
+        img_url = request.files["img"]
+        print(f"{name}\n{price}\n{stock}\n{size}\n{description}\n{img_url}")
+        print(img_url.filename)
+
+    return render_template("add.html")
 
 
 @app.route('/')

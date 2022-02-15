@@ -1,0 +1,50 @@
+{% include "header.html" %}
+<body>
+<form action="{{url_for('add_product')}}" method="POST" enctype="multipart/form-data">
+<div style="margin:100 500px 0">
+    <!--    name-->
+    <div class="input-group input-group-lg">
+        <span class="input-group-text" id="inputGroup-sizing-lg">Product name</span>
+        <input name="name" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
+    </div><br>
+
+<!--    price-->
+
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="inputGroup-sizing-default">Price</span>
+        <input type="text" name="price" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+    </div>
+
+<!--    stock-->
+
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="inputGroup-sizing-default2">Stock</span>
+        <input type="text" name="stock" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default2">
+    </div>
+
+<!--    size-->
+
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="inputGroup-sizing-default3">Size</span>
+        <input type="text" name="size" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default3">
+    </div>
+
+<!--    description-->
+
+    <div class="input-group">
+        <span class="input-group-text">Description</span>
+        <textarea class="form-control" name="desc" aria-label="With textarea"></textarea>
+    </div><br>
+
+<!--   image file upload-->
+    <div class="input-group mb-3">
+        <input type="file" name="img"  class="form-control" id="inputGroupFile02">
+        <label class="input-group-text" for="inputGroupFile02">Upload</label>
+    </div>
+
+    <button type="submit" class="btn btn-outline-secondary btn-lg">Upload Product</button>
+</div>
+
+</form>
+</body>
+</html>
