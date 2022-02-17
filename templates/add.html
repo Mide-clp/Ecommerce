@@ -1,50 +1,116 @@
 {% include "header.html" %}
+{% with messages=get_flashed_messages() %}
+
+
 <body>
-<form action="{{url_for('add_product')}}" method="POST" enctype="multipart/form-data">
-<div style="margin:100 500px 0">
-    <!--    name-->
-    <div class="input-group input-group-lg">
-        <span class="input-group-text" id="inputGroup-sizing-lg">Product name</span>
-        <input name="name" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
-    </div><br>
 
-<!--    price-->
 
-    <div class="input-group mb-3">
-        <span class="input-group-text" id="inputGroup-sizing-default">Price</span>
-        <input type="text" name="price" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+    <div style="margin:100px 400px 0">
+
+        {% if messages %}
+            {% for message in messages %}
+                <p style="color: red; font-weight:500;">{{message}}</p>
+            {% endfor %}
+        {% endif %}
+
+        <form action="{{url_for('add_product')}}" method="POST" enctype="multipart/form-data">
+
+            <!--    name-->
+            <div class="input-group input-group-lg">
+                <span class="input-group-text" id="inputGroup-sizing-lg">Product name</span>
+                <input name="name" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg" required>
+            </div><br>
+
+        <!--    price-->
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-default">Price</span>
+                <input type="text" name="price" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" required>
+            </div>
+
+        <!--    stock-->
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-default2">Stock</span>
+                <input type="text" name="stock" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default2" required>
+            </div>
+
+        <!--    category-->
+
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-default4">category</span>
+                <input type="text" name="category" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default4" required>
+            </div>
+
+        <!--    size-->
+
+            <h3>Size</h3>
+
+            <div class="form-check">
+               <input type="checkbox" value="" id="flexCheckDefault" name="small">
+               <label for="flexCheckDefault">
+                    Small
+               </label>
+            </div>
+            <div class="form-check">
+               <input type="checkbox" value="" id="flexCheckDefault1" name="medium">
+               <label  for="flexCheckDefault1">
+                    Medium
+              </label>
+            </div>
+            <div class="form-check">
+               <input type="checkbox" value="" id="flexCheckDefault2" name="large">
+               <label for="flexCheckDefault2">
+                    Large
+              </label>
+            </div>
+            <div class="form-check">
+               <input type="checkbox" value="" id="flexCheckDefault3" name="xl">
+               <label for="flexCheckDefault3">
+                    XL
+              </label>
+            </div>
+            <div class="form-check">
+               <input type="checkbox" value="" id="flexCheckDefault4" name="xxl">
+               <label for="flexCheckDefault4">
+                    XXL
+              </label>
+           </div>
+
+
+        <!--    description-->
+
+            <div class="input-group">
+                <span class="input-group-text">Description</span>
+                <textarea class="form-control" name="desc" aria-label="With textarea" required></textarea>
+            </div><br>
+
+        <!--   image file upload-->
+
+            <div class="input-group mb-3">
+
+                <input type="file" name="img1"  class="form-control" id="inputGroupFile03" required>
+                <label class="input-group-text" for="inputGroupFile03">Upload Image 1</label>
+            </div>
+
+            <div class="input-group mb-3">
+
+                <input type="file" name="img2"  class="form-control" id="inputGroupFile04" required>
+                <label class="input-group-text" for="inputGroupFile04">Upload Image 2</label>
+            </div>
+
+            <div class="input-group mb-3">
+
+                <input type="file" name="img3"  class="form-control" id="inputGroupFile05" required>
+                <label class="input-group-text" for="inputGroupFile05">Upload Image 3</label>
+            </div>
+
+            <button type="submit" class="btn btn-outline-secondary btn-lg">Upload Product</button>
+
+        </form>
     </div>
 
-<!--    stock-->
-
-    <div class="input-group mb-3">
-        <span class="input-group-text" id="inputGroup-sizing-default2">Stock</span>
-        <input type="text" name="stock" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default2">
-    </div>
-
-<!--    size-->
-
-    <div class="input-group mb-3">
-        <span class="input-group-text" id="inputGroup-sizing-default3">Size</span>
-        <input type="text" name="size" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default3">
-    </div>
-
-<!--    description-->
-
-    <div class="input-group">
-        <span class="input-group-text">Description</span>
-        <textarea class="form-control" name="desc" aria-label="With textarea"></textarea>
-    </div><br>
-
-<!--   image file upload-->
-    <div class="input-group mb-3">
-        <input type="file" name="img"  class="form-control" id="inputGroupFile02">
-        <label class="input-group-text" for="inputGroupFile02">Upload</label>
-    </div>
-
-    <button type="submit" class="btn btn-outline-secondary btn-lg">Upload Product</button>
-</div>
-
-</form>
 </body>
-</html>
+{% endwith %}
+
+

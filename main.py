@@ -6,17 +6,31 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 import _sqlite3
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 Bootstrap(app)
-
+UPLOAD_FOLDER = "static/products/uploads/"
 app.config['SECRET_KEY'] = "letbuildthisstuff"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ecommerce.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+# check for file type
+
+def allowed_file(filename):
+    if filename.split(".")[1] in ALLOWED_EXTENSIONS:
+        return True
+    else:
+        return False
 
 
 @login_manager.user_loader
@@ -36,7 +50,7 @@ class User(UserMixin, db.Model):
     city = db.Column(db.String(250), nullable=True)
     postcode = db.Column(db.String(250), nullable=True)
     phone = db.Column(db.String(250), nullable=True)
-    email = db.Column(db.String(250), nullable=True, secondary_key=True)
+    email = db.Column(db.String(250), nullable=True, unique=True)
     password = db.Column(db.String(250), nullable=True)
     cart = relationship("Cart", back_populates="user")
     wishlist = relationship("Wishlist", back_populates="added_by")
@@ -49,23 +63,23 @@ class Products(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=True)
     price = db.Column(db.Float, nullable=True)
-    image_url = db.Column(db.String(250), nullable=True)
     stock = db.Column(db.Integer, nullable=True)
     description = db.Column(db.String(250), nullable=True)
-    size = db.Column(db.String(250), nullable=True)
-    cart = relationship("Cart", back_populates="products")
+    cart = relationship("Cart", back_populates="product")
     # number_of_products = db.Column(db.Float(3), nullable=False)
-    wishlist = relationship("Wishlist", back_populates="products")
-    product_category = relationship("Category", back_populates="products")
+    wishlist = relationship("Wishlist", back_populates="product")
+    product_category = relationship("Category", back_populates="product")
+    prod_image = relationship("Image", back_populates="product")
+    prod_size = relationship("Size", back_populates="product")
 
 
 #
 class Category(db.Model):
     __tablename__ = "categories"
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
     name = db.Column(db.String(250), nullable=True)
-    products = relationship("Products", back_populates="product_category")
+    product = relationship("Products", back_populates="product_category")
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=True)
 
 
 #
@@ -87,8 +101,22 @@ class Wishlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    products = relationship("Products", back_populates="wishlist")
+    product = relationship("Products", back_populates="wishlist")
     added_by = relationship("User", back_populates="wishlist")
+
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    path = db.Column(db.String(250), nullable=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    product = relationship("Products", back_populates="prod_image")
+
+
+class Size(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sizes = db.Column(db.String(250), nullable=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    product = relationship("Products", back_populates="prod_size")
 
 
 db.create_all()
@@ -98,13 +126,88 @@ db.create_all()
 def add_product():
     if request.method == "POST":
         name = request.form["name"]
-        price = request.form["price"]
-        stock = request.form["stock"]
-        size = request.form["size"]
+        price = float(request.form["price"])
+        stock = int(request.form["stock"])
+        category = request.form["category"]
+        # size = request.form["size"]
         description = request.form["desc"]
-        img_url = request.files["img"]
-        print(f"{name}\n{price}\n{stock}\n{size}\n{description}\n{img_url}")
-        print(img_url.filename)
+        image1 = request.files["img1"]
+        image2 = request.files["img2"]
+        image3 = request.files["img3"]
+        images = [image1, image2, image3]
+        # print(f"{name}\n{price}\n{stock}\n{size}\n{description}\n{images}\n{category}")/
+
+        #  checking if the file type is allowed
+        if allowed_file(images[0].filename) and allowed_file(images[1].filename) and allowed_file(images[2].filename):
+            # saving product data
+            new_product = Products(name=name,
+                                   price=price,
+                                   stock=stock,
+                                   description=description,
+                                   # size=size,
+                                   )
+            db.session.add(new_product)
+            db.session.commit()
+
+            product_all = Products.query.filter_by(name=name).all()
+            product = product_all[-1]
+            # Adding category to category table
+            add_category = Category(name=category,
+                                    product_id=product.id, )
+            db.session.add(add_category)
+            db.session.commit()
+
+            #  size data and saving it to the database
+            if "small" in request.form:
+                new_size = Size(product_id=product.id,
+                                sizes="small",
+                                )
+                db.session.add(new_size)
+
+            if "medium" in request.form:
+                new_size = Size(product_id=product.id,
+                                sizes="medium",
+                                )
+                db.session.add(new_size)
+
+            if "large" in request.form:
+                new_size = Size(product_id=product.id,
+                                sizes="large",
+                                )
+                db.session.add(new_size)
+
+            if "xl" in request.form:
+                new_size = Size(product_id=product.id,
+                                sizes="xl",
+                                )
+                db.session.add(new_size)
+
+            if "xxl" in request.form:
+                new_size = Size(product_id=product.id,
+                                sizes="xxl",
+                                )
+                db.session.add(new_size)
+
+            db.session.commit()
+
+            for image in images:
+                file_name = secure_filename(image.name)
+
+                # saving file to file path
+                image.save(os.path.join(UPLOAD_FOLDER, file_name))
+                os.rename(UPLOAD_FOLDER + file_name, UPLOAD_FOLDER + image.filename)
+                image_loc = UPLOAD_FOLDER + image.filename
+
+                # adding path to database
+                new_image = Image(product_id=product.id,
+                                  path=image_loc, )
+                db.session.add(new_image)
+                db.session.commit()
+                print(image_loc)
+
+        else:
+            flash("You uploaded an incorrect file")
+            return redirect(url_for("add_product"))
 
     return render_template("add.html")
 
