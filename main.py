@@ -71,6 +71,7 @@ class Products(db.Model):
     product_category = relationship("Category", back_populates="product")
     prod_image = relationship("Image", back_populates="product")
     prod_size = relationship("Size", back_populates="product")
+    rating = relationship("Rating", back_populates="product_rating")
 
 
 #
@@ -119,6 +120,13 @@ class Size(db.Model):
     product = relationship("Products", back_populates="prod_size")
 
 
+class Rating(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    number = db.Column(db.Integer)
+    product_rating = relationship("Products", back_populates="rating")
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+
+
 db.create_all()
 
 
@@ -129,6 +137,7 @@ def add_product():
         price = float(request.form["price"])
         stock = int(request.form["stock"])
         category = request.form["category"]
+        rating = int(request.form["rating"])
         # size = request.form["size"]
         description = request.form["desc"]
         image1 = request.files["img1"]
@@ -157,6 +166,12 @@ def add_product():
             db.session.add(add_category)
             db.session.commit()
 
+            new_rating = Rating(number=rating,
+                                product_id=product.id,
+
+                                )
+            db.session.add(new_rating)
+            db.session.commit()
             #  size data and saving it to the database
             if "small" in request.form:
                 new_size = Size(product_id=product.id,
@@ -217,9 +232,19 @@ def home():
     return render_template("index.html")
 
 
+a = 0
+
+
 @app.route('/shop')
 def shop():
-    return render_template("shop.html")
+    global a
+    data = Products.query.all()
+    for dats in data:
+        print(dats.product_category[0].name)
+        a = a + 4
+        print(a)
+        print(dats.prod_image[0].path)
+    return render_template("shop.html", datas=data)
 
 
 @app.route('/wishlist')
