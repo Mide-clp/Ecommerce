@@ -130,6 +130,11 @@ class Rating(db.Model):
 db.create_all()
 
 
+@app.route('/')
+def home():
+    return render_template("index.html")
+
+
 @app.route('/add', methods=["GET", "POST"])
 def add_product():
     if request.method == "POST":
@@ -172,6 +177,7 @@ def add_product():
                                 )
             db.session.add(new_rating)
             db.session.commit()
+
             #  size data and saving it to the database
             if "small" in request.form:
                 new_size = Size(product_id=product.id,
@@ -218,7 +224,7 @@ def add_product():
                                   path=image_loc, )
                 db.session.add(new_image)
                 db.session.commit()
-                print(image_loc)
+                # print(image_loc)
 
         else:
             flash("You uploaded an incorrect file")
@@ -227,23 +233,54 @@ def add_product():
     return render_template("add.html")
 
 
-@app.route('/')
-def home():
-    return render_template("index.html")
+@app.route('/preview-product')
+def preview():
+    data = Products.query.all()
+    return render_template("preview.html", datas=data)
 
 
-a = 0
+@app.route('/edit-product/<product_id>', methods=["POST", "GET"])
+def edit_product(product_id):
+    # getting post details by id passed to route
+    product = Products.query.get(product_id)
+    print(product.description)
+
+    # creating s dictionary to pass the html document
+    update_product = {"id": product.id, "name": product.name, "price": product.price,
+                      "rating": product.rating[0].number,
+                      "category": product.product_category[0].name, "description": product.description,
+                      "stock": product.stock, }
+    print(update_product["rating"])
+
+    # checking if form is being filled and updating database details with the information
+    if request.method == "POST":
+        print(request.form["name"])
+        product.name = request.form["name"]
+        product.price = float(request.form["price"])
+        product.rating[0].number = int(request.form["rating"])
+        product.stock = int(request.form["stock"])
+        product.description = request.form["desc"]
+        product.product_category[0].name = request.form["category"]
+        db.session.commit()
+        return redirect(url_for("preview"))
+    # print(request.form["name"])
+    return render_template("edit.html", product=update_product)
+
+
+@app.route('/delete/<product_id>')
+def delete_product(product_id):
+    product = db.session.query.get(product_id)
+    db.session.delete(product)
+    db.session.commit()
+    return redirect(url_for("preview"))
+
+
 
 
 @app.route('/shop')
 def shop():
-    global a
     data = Products.query.all()
-    for dats in data:
-        print(dats.product_category[0].name)
-        a = a + 4
-        print(a)
-        print(dats.prod_image[0].path)
+
     return render_template("shop.html", datas=data)
 
 
@@ -265,6 +302,10 @@ def cart():
 @app.route('/account')
 def account():
     return render_template('dashboard.html')
+
+
+def register():
+    name = ""
 
 
 if __name__ == "__main__":
