@@ -224,6 +224,7 @@ def add_product():
                                   path=image_loc, )
                 db.session.add(new_image)
                 db.session.commit()
+                return redirect(url_for("preview"))
                 # print(image_loc)
 
         else:
@@ -269,12 +270,41 @@ def edit_product(product_id):
 
 @app.route('/delete/<product_id>')
 def delete_product(product_id):
-    product = db.session.query.get(product_id)
+    # get products to deelete
+    product = Products.query.get(product_id)
+    category = Category.query.filter_by(product_id=product_id).first()
+    carts = Cart.query.filter_by(product_id=product_id).first()
+    image = Image.query.filter_by(product_id=product_id).first()
+    rating = Rating.query.filter_by(product_id=product_id).first()
+    size = Size.query.filter_by(product_id=product_id).first()
+    wishlists = Wishlist.query.filter_by(product_id=product_id).first()
+
+    # deleting product from all table
     db.session.delete(product)
+    db.session.delete(category)
+    db.session.delete(carts)
+    db.session.delete(image)
+    db.session.delete(rating)
+    db.session.delete(size)
+    db.session.delete(wishlists)
+
+    # committing changes to database
     db.session.commit()
     return redirect(url_for("preview"))
 
 
+@app.route('/product-page/<p_id>')
+def show_product(p_id):
+    product = Products.query.get(p_id)
+    print(product.name)
+
+    return render_template("product.html", product=product)
+
+
+@app.route('/product/<int:p_id>')
+def view_product(p_id):
+    product = Products.query.get(p_id)
+    return render_template("product.html", product=product)
 
 
 @app.route('/shop')

@@ -52,8 +52,7 @@
                             <div class="col-6 col-md-4 col-lg-4 col-xl-3" style="margin-top:50px">
                                 <div class="product">
                                     <figure class="product-media">
-                                        <span class="product-label label-new">New</span>
-                                        <a href="product.html">
+                                        <a href="{{url_for('view_product', p_id=data.id)}}">
                                             <img src="{{data.prod_image[0].path}}" alt="Product image" class="product-image">
                                         </a>
 
@@ -71,7 +70,7 @@
                                         <div class="product-cat">
                                             <a href="#">{{data.product_category[0].name}}</a>
                                         </div><!-- End .product-cat -->
-                                        <h3 class="product-title"><a href="product.html">{{data.name}}</a></h3><!-- End .product-title -->
+                                        <h3 class="product-title"><a href="{{url_for('view_product', p_id=data.id)}}">{{data.name}}</a></h3><!-- End .product-title -->
                                         <div class="product-price">
                                             ${{data.price}}
                                         </div><!-- End .product-price -->
