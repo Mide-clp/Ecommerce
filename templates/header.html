@@ -44,8 +44,13 @@
                                     <li><a href="{{url_for('wishlist')}}"><i class="icon-heart-o"></i>My Wishlist <span>(3)</span></a></li>
                                     <li><a href="about.html">About Us</a></li>
                                     <li><a href="contact.html">Contact Us</a></li>
-                                    <li><a href="{{url_for('account')}}"><i class="icon-user"></i>My account</a></li>
-                                    <li><a href="#signin-modal" data-toggle="modal"><i class="icon-user"></i>Login</a></li>
+                                    {% if user %}
+                                        <li><a href="{{url_for('account')}}"><i class="icon-user"></i>My account</a></li>
+                                        <li><a href="{{url_for('logout')}}"><i class="icon-user"></i>Sign out</a></li>
+
+                                    {% else %}
+                                        <li><a href="{{url_for('login')}}"><i class="icon-user"></i>Login</a></li>
+                                    {% endif %}
 
                                 </ul>
                             </li>

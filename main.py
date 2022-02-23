@@ -1,27 +1,46 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, abort
 from flask_bootstrap import Bootstrap
-from flask_ckeditor import CKEditor
+from functools import wraps
 from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 import _sqlite3
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
 Bootstrap(app)
-UPLOAD_FOLDER = "static/products/uploads/"
+SAVE_PATH = "static/products/uploads/"
+UPLOAD_FOLDER = "products/uploads/"
 app.config['SECRET_KEY'] = "letbuildthisstuff"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ecommerce.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
+app.config["SAVE_PATH"] = SAVE_PATH
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+# creating login manager
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+def admin_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.id != 1:
+            return abort(403, "Access denied")
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 # check for file type
@@ -132,7 +151,7 @@ db.create_all()
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template("index.html", user=current_user.is_authenticated)
 
 
 @app.route('/add', methods=["GET", "POST"])
@@ -215,8 +234,8 @@ def add_product():
                 file_name = secure_filename(image.name)
 
                 # saving file to file path
-                image.save(os.path.join(UPLOAD_FOLDER, file_name))
-                os.rename(UPLOAD_FOLDER + file_name, UPLOAD_FOLDER + image.filename)
+                image.save(os.path.join(SAVE_PATH, file_name))
+                os.rename(SAVE_PATH + file_name, SAVE_PATH + image.filename)
                 image_loc = UPLOAD_FOLDER + image.filename
 
                 # adding path to database
@@ -224,20 +243,20 @@ def add_product():
                                   path=image_loc, )
                 db.session.add(new_image)
                 db.session.commit()
-                return redirect(url_for("preview"))
-                # print(image_loc)
+            return redirect(url_for("preview"))
+            # print(image_loc)
 
         else:
             flash("You uploaded an incorrect file")
             return redirect(url_for("add_product"))
 
-    return render_template("add.html")
+    return render_template("add.html", user=current_user.is_authenticated)
 
 
 @app.route('/preview-product')
 def preview():
     data = Products.query.all()
-    return render_template("preview.html", datas=data)
+    return render_template("preview.html", datas=data, user=current_user.is_authenticated)
 
 
 @app.route('/edit-product/<product_id>', methods=["POST", "GET"])
@@ -265,7 +284,7 @@ def edit_product(product_id):
         db.session.commit()
         return redirect(url_for("preview"))
     # print(request.form["name"])
-    return render_template("edit.html", product=update_product)
+    return render_template("edit.html", product=update_product, user=current_user.is_authenticated)
 
 
 @app.route('/delete/<product_id>')
@@ -290,52 +309,97 @@ def delete_product(product_id):
 
     # committing changes to database
     db.session.commit()
-    return redirect(url_for("preview"))
-
-
-@app.route('/product-page/<p_id>')
-def show_product(p_id):
-    product = Products.query.get(p_id)
-    print(product.name)
-
-    return render_template("product.html", product=product)
+    return redirect(url_for("preview"), user=current_user.is_authenticated)
 
 
 @app.route('/product/<int:p_id>')
 def view_product(p_id):
     product = Products.query.get(p_id)
-    return render_template("product.html", product=product)
+    return render_template("product.html", product=product, user=current_user.is_authenticated)
 
 
 @app.route('/shop')
 def shop():
     data = Products.query.all()
 
-    return render_template("shop.html", datas=data)
+    return render_template("shop.html", datas=data, user=current_user.is_authenticated)
 
 
 @app.route('/wishlist')
 def wishlist():
-    return render_template('wishlist.html')
+    return render_template('wishlist.html', user=current_user.is_authenticated)
 
 
 @app.route('/checkout')
 def checkout():
-    return render_template('checkout.html')
+    return render_template('checkout.html', user=current_user.is_authenticated)
 
 
 @app.route('/cart')
 def cart():
-    return render_template('cart.html')
+    return render_template('cart.html', user=current_user.is_authenticated)
 
 
 @app.route('/account')
 def account():
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', user=current_user.is_authenticated)
 
 
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        user = User.query.filter_by(email=request.form["login-email"]).first()
+        print(request.form["login-email"])
+        print(user)
+        if not user:
+            flash("This user does not exist")
+            return redirect(url_for('login'))
+
+        elif check_password_hash(user.password, password=request.form["login-password"]):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            flash("You entered an incorrect password")
+            return redirect(url_for('login'))
+
+    return render_template("login.html")
+
+
+@app.route('/register', methods=["GET", "POST"])
 def register():
-    name = ""
+    if request.method == "POST":
+        exist_user = User.query.filter_by(email=request.form["register-email"]).first()
+
+        # checking if user already exist
+        if exist_user:
+            flash("This user already exist")
+            return redirect(url_for('register'))
+
+        if len(request.form["register-password"]) < 8:
+            flash("Password too short")
+            return redirect(request.url)
+
+        email = request.form["register-email"]
+        password = generate_password_hash(request.form["register-password"], method='pbkdf2:sha256', salt_length=8)
+        user = User()
+        user.email = email
+        user.password = password
+
+        # committing change to database
+        db.session.add(user)
+        db.session.commit()
+
+        # logining in user and redirecting to account page
+        login_user(user)
+        return redirect(url_for('account'))
+
+    return render_template("register.html")
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 
 if __name__ == "__main__":
