@@ -1,9 +1,19 @@
 {% include 'header.html' %}
+{% with messages=get_flashed_messages() %}
 <body>
         <main class="main">
         	<div class="page-header text-center" style="background-image: url('static/assets/images/page-header-bg.jpg')">
         		<div class="container">
-        			<h1 class="page-title">My Account<span>Shop</span></h1>
+        			<h1 class="page-title">My Account
+						{% if messages %}
+							{% for message in messages %}
+								<p><span style="color: red; font-weight:500;">{{message}}</span></p>
+							{% endfor %}
+
+						{% else %}
+							<span>Shop</span>
+						{% endif %}
+					</h1>
         		</div><!-- End .container -->
         	</div><!-- End .page-header -->
             <nav aria-label="breadcrumb" class="breadcrumb-nav mb-3">
@@ -38,15 +48,16 @@
 								        <a class="nav-link" id="tab-account-link" data-toggle="tab" href="#tab-account" role="tab" aria-controls="tab-account" aria-selected="false">Account Details</a>
 								    </li>
 								    <li class="nav-item">
-								        <a class="nav-link" href="#">Sign Out</a>
+								        <a class="nav-link" href="{{url_for('logout')}}">Sign Out</a>
 								    </li>
 								</ul>
 	                		</aside><!-- End .col-lg-3 -->
 
 	                		<div class="col-md-8 col-lg-9">
 	                			<div class="tab-content">
+
 								    <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-dashboard-link">
-								    	<p>Hello <span class="font-weight-normal text-dark">User</span> (not <span class="font-weight-normal text-dark">User</span>? <a href="#">Log out</a>) 
+								    	<p>Hello <span class="font-weight-normal text-dark">User</span> (not <span class="font-weight-normal text-dark">User</span>? <a href="{{url_for('logout')}}">Log out</a>)
 								    	<br>
 								    	From your account dashboard you can view your <a href="#tab-orders" class="tab-trigger-link link-underline">recent orders</a>, manage your <a href="#tab-address" class="tab-trigger-link">shipping and billing addresses</a>, and <a href="#tab-account" class="tab-trigger-link">edit your password and account details</a>.</p>
 								    </div><!-- .End .tab-pane -->
@@ -68,61 +79,54 @@
 								    		<div class="col-lg-6">
 								    			<div class="card card-dashboard">
 								    				<div class="card-body">
-								    					<h3 class="card-title">Billing Address</h3><!-- End .card-title -->
-
-														<p>User Name<br>
-														User Company<br>
-														John str<br>
-														New York, NY 10001<br>
-														1-234-987-6543<br>
-														yourmail@mail.com<br>
-														<a href="#">Edit <i class="icon-edit"></i></a></p>
-								    				</div><!-- End .card-body -->
-								    			</div><!-- End .card-dashboard -->
-								    		</div><!-- End .col-lg-6 -->
-
-								    		<div class="col-lg-6">
-								    			<div class="card card-dashboard">
-								    				<div class="card-body">
 								    					<h3 class="card-title">Shipping Address</h3><!-- End .card-title -->
 
-														<p>You have not set up this type of address yet.<br>
+														<p>{{data.Fname}} {{data.Lname}}<br>
+														{{data.address}}<br>
+														{{data.city}} {{data.postcode}}<br>
+														{{data.phone}}<br>
+														{{data.email}}<br>
 														<a href="#">Edit <i class="icon-edit"></i></a></p>
 								    				</div><!-- End .card-body -->
 								    			</div><!-- End .card-dashboard -->
 								    		</div><!-- End .col-lg-6 -->
+
 								    	</div><!-- End .row -->
 								    </div><!-- .End .tab-pane -->
 
 								    <div class="tab-pane fade" id="tab-account" role="tabpanel" aria-labelledby="tab-account-link">
-								    	<form action="#">
+								    	<form action="{{url_for('account')}}" method="post">
 			                				<div class="row">
 			                					<div class="col-sm-6">
 			                						<label>First Name *</label>
-			                						<input type="text" class="form-control" required>
+													{% if data.Fname %}
+			                							<input type="text" class="form-control" name="fname" required value="{{data.Fname}}">
+													{% else %}
+														<input type="text" class="form-control" name="fname" required>
+													{% endif %}
 			                					</div><!-- End .col-sm-6 -->
 
 			                					<div class="col-sm-6">
 			                						<label>Last Name *</label>
-			                						<input type="text" class="form-control" required>
+													{% if data.Lname %}
+			                							<input type="text" class="form-control" required name="lname" value="{{data.Lname}}">
+													{% else %}
+														<input type="text" class="form-control" required name="lname">
+													{% endif %}
 			                					</div><!-- End .col-sm-6 -->
 			                				</div><!-- End .row -->
 
-		            						<label>Display Name *</label>
-		            						<input type="text" class="form-control" required>
-		            						<small class="form-text">This will be how your name will be displayed in the account section and in reviews</small>
-
 		                					<label>Email address *</label>
-		        							<input type="email" class="form-control" required>
+		        							<input type="email" class="form-control" name="email" required value="{{data.email}}">
 
-		            						<label>Current password (leave blank to leave unchanged)</label>
-		            						<input type="password" class="form-control">
+		            						<label>Current password</label>
+		            						<input type="password" class="form-control" name="old_password">
 
 		            						<label>New password (leave blank to leave unchanged)</label>
-		            						<input type="password" class="form-control">
+		            						<input type="password" class="form-control" name="new_password">
 
-		            						<label>Confirm new password</label>
-		            						<input type="password" class="form-control mb-2">
+		            						<label>Confirm new password (leave blank to leave unchanged)</label>
+		            						<input type="password" class="form-control mb-2" name="confirm_password">
 
 		                					<button type="submit" class="btn btn-outline-primary-2">
 			                					<span>SAVE CHANGES</span>
@@ -139,5 +143,5 @@
         </main><!-- End .main -->
 
 </body>
-
+{% endwith %}
 {% include 'footer.html' %}

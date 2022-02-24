@@ -1,5 +1,5 @@
 {% include 'header.html' %}
-
+{% with messages=get_flashed_messages() %}
 <body>
         <main class="main">
             <nav aria-label="breadcrumb" class="breadcrumb-nav border-0 mb-0">
@@ -58,33 +58,41 @@
                                         <p>S{{product.description}} </p>
                                     </div><!-- End .product-content -->
 
-                                    <div class="details-filter-row details-row-size">
-                                        <label for="size">Size:</label>
-                                        <div class="select-custom">
-                                            <select name="size" id="size" class="form-control">
-                                                <option value="#" selected="selected">Select a size</option>
-                                                {% for size in product.prod_size %}
-                                                    <option value="s">{{size.sizes}}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div><!-- End .select-custom -->
+                                    <form action="{{url_for('add_cart_or_product', add_id=product.id)}}" method="get">
 
-                                    </div><!-- End .details-filter-row -->
+                                        <div class="details-filter-row details-row-size">
+                                            <label for="size">Size:</label>
+                                           <div class="select-custom">
+                                                <select name="size" id="size" class="form-control">
+                                                    <option value="#" selected="selected">Select a size</option>
+                                                    {% for size in product.prod_size %}
+                                                        <option value="{{size.sizes}}">{{size.sizes}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div><!-- End .select-custom -->
 
-                                    <div class="details-filter-row details-row-size">
-                                        <label for="qty">Qty:</label>
-                                        <div class="product-details-quantity">
-                                            <input type="number" id="qty" class="form-control" value="1" min="1" max="10" step="1" data-decimals="0" required>
-                                        </div><!-- End .product-details-quantity -->
-                                    </div><!-- End .details-filter-row -->
+                                        </div><!-- End .details-filter-row -->
+                                            {% if messages %}
+                                                    {% for message in messages %}
+                                                       <p style="color: red; font-weight:500;">{{message}}</p>
+                                                    {% endfor %}
+                                            {% endif %}
+                                        <div class="details-filter-row details-row-size">
 
-                                    <div class="product-details-action">
-                                        <a href="#" class="btn-product btn-cart"><span>add to cart</span></a>
+                                            <label for="qty">Qty:</label>
+                                            <div class="product-details-quantity">
+                                                <input type="number" id="qty" class="form-control" name="qty" value="1" min="1" max="100" step="1" data-decimals="0" required>
+                                            </div><!-- End .product-details-quantity -->
+                                        </div><!-- End .details-filter-row -->
 
-                                        <div class="details-action-wrapper">
-                                            <a href="#" class="btn-product btn-wishlist" title="Wishlist"><span>Add to Wishlist</span></a>
-                                        </div><!-- End .details-action-wrapper -->
-                                    </div><!-- End .product-details-action -->
+                                        <div class="product-details-action">
+                                            <button type="submit" name="add" class="btn-product btn-cart"><span>add to cart</span></button>
+
+                                            <div class="details-action-wrapper">
+                                                <button class="btn-product btn-wishlist" name="wish" type="submit" title="Wishlist"><span>Add to Wishlist</span></button>
+                                            </div><!-- End .details-action-wrapper -->
+                                        </div><!-- End .product-details-action -->
+                                    </form>
 
                                     <div class="product-details-footer">
                                         <div class="product-cat">
@@ -257,5 +265,6 @@
     <button id="scroll-top" title="Back to Top"><i class="icon-arrow-up"></i></button>
 
 </body>
+{% endwith %}
 {% include 'footer.html' %}
 

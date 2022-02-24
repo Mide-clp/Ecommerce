@@ -111,7 +111,8 @@ class Cart(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
     product = relationship("Products", back_populates="cart")
     user = relationship("User", back_populates="cart")
-    number_of_products = db.Column(db.Float(3), nullable=False)
+    size = db.Column(db.String(250), nullable=True)
+    qty = db.Column(db.Integer, nullable=True)
 
 
 #
@@ -120,6 +121,8 @@ class Wishlist(db.Model):
     __tablename__ = "wishlists"
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    size = db.Column(db.String(250), nullable=True)
+    qty = db.Column(db.Integer, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     product = relationship("Products", back_populates="wishlist")
     added_by = relationship("User", back_populates="wishlist")
@@ -161,7 +164,7 @@ def add_product():
         price = float(request.form["price"])
         stock = int(request.form["stock"])
         category = request.form["category"]
-        rating = int(request.form["rating"])
+        rating = float(request.form["rating"])
         # size = request.form["size"]
         description = request.form["desc"]
         image1 = request.files["img1"]
@@ -309,7 +312,7 @@ def delete_product(product_id):
 
     # committing changes to database
     db.session.commit()
-    return redirect(url_for("preview"), user=current_user.is_authenticated)
+    return redirect(url_for("preview"))
 
 
 @app.route('/product/<int:p_id>')
@@ -340,22 +343,160 @@ def cart():
     return render_template('cart.html', user=current_user.is_authenticated)
 
 
-@app.route('/account')
+@app.route('/add-cart-or-prod/<int:add_id>')
+def add_cart_or_product(add_id):
+    product = Products.query.get(add_id)
+    if request.args.get('add') == "":
+        # creating item
+        add_cart = Cart()
+        try:
+            # adding to database
+            print(product.stock)
+            if int(product.stock) > int(request.args.get('qty')):
+                add_cart.user_id = current_user.id
+                add_cart.product_id = add_id
+                add_cart.size = request.args.get('size')
+                add_cart.qty = request.args.get('qty')
+                db.session.add(add_cart)
+                db.session.commit()
+            else:
+                flash("Out of stock")
+                # return redirect()
+
+        except:
+            flash("login to proceed")
+            return redirect(url_for('login'))
+
+        print(request.args.get('add'))
+
+    # add to wishlist
+    if request.args.get('wish') == "":
+        print(request.args.get('wish'))
+        # creating item
+        add_wish_list = Wishlist()
+        try:
+
+            # adding to database
+            if int(product.stock) > int(request.args.get('qty')):
+                add_wish_list.product_id = add_id
+                add_wish_list.size = request.args.get('size')
+                add_wish_list.qty = request.args.get('qty')
+                add_wish_list.user_id = current_user.id
+                db.session.add(add_wish_list)
+                db.session.commit()
+            else:
+                flash("Out of stock")
+
+        except:
+            flash("login to proceed")
+            return redirect(url_for('login'))
+
+    return redirect(url_for('view_product', p_id=add_id))
+
+
+@app.route('/add-cart/<int:add_id>')
+def add_to_cart(add_id):
+    new_cart = Cart()
+    try:
+
+        # adding to database
+
+        new_cart.product_id = add_id
+        new_cart.size = request.args.get('size')
+        new_cart.qty = request.args.get('qty')
+        new_cart.user_id = current_user.id
+
+    except:
+        flash("login to proceed")
+        return redirect(url_for('login'))
+
+    else:
+        db.session.add(new_cart)
+        db.session.commit()
+
+    return redirect(url_for('shop'))
+
+
+@app.route('/add-wishlist/<int:wish_id>')
+def add_wish(wish_id):
+    add_wish_list = Wishlist()
+    try:
+
+        # adding to database
+        add_wish_list.product_id = wish_id
+        add_wish_list.size = request.args.get('size')
+        add_wish_list.qty = request.args.get('qty')
+        add_wish_list.user_id = current_user.id
+
+    except:
+        flash("login to proceed")
+        return redirect(url_for('login'))
+
+    else:
+        db.session.add(add_wish_list)
+        db.session.commit()
+
+    return redirect(url_for('shop'))
+
+
+@app.route('/account', methods=["GET", "POST"])
 def account():
-    return render_template('dashboard.html', user=current_user.is_authenticated)
+    # getting user details by id
+    user = ""
+    try:
+        user = User.query.get(current_user.id)
+    except:
+        flash("You need to login to use this page.")
+        return redirect(url_for('login'))
+    if request.method == "POST":
+
+        # getting details from form
+        first_name = request.form["fname"]
+        last_name = request.form["lname"]
+        email = request.form.get("email")
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+
+        user.Fname = first_name
+        user.Lname = last_name
+
+        if check_password_hash(pwhash=user.password, password=old_password) and email == user.email and \
+                new_password == confirm_password and request.form.get("new_password"):
+
+            user.password = generate_password_hash(new_password, method='pbkdf2:sha256', salt_length=8)
+            print(old_password)
+            db.session.commit()
+
+        elif email != user.email:
+            flash("Incorrect Email")
+            return redirect(url_for('account'))
+
+        elif new_password != confirm_password:
+            flash("password does not match")
+            db.session.commit()
+            return redirect(url_for('account'))
+
+        elif not check_password_hash(pwhash=user.password, password=old_password):
+            flash("Incorrect password")
+            return redirect(url_for('account'))
+
+
+        else:
+            db.session.commit()
+    return render_template('dashboard.html', user=current_user.is_authenticated, data=user)
 
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = User.query.filter_by(email=request.form["login-email"]).first()
-        print(request.form["login-email"])
-        print(user)
+        user = User.query.filter_by(email=request.form["singin-email"]).first()
+
         if not user:
             flash("This user does not exist")
             return redirect(url_for('login'))
 
-        elif check_password_hash(user.password, password=request.form["login-password"]):
+        elif check_password_hash(user.password, password=request.form["singin-password"]):
             login_user(user)
             return redirect(url_for('home'))
         else:
@@ -393,7 +534,7 @@ def register():
         login_user(user)
         return redirect(url_for('account'))
 
-    return render_template("register.html")
+    return render_template("login.html")
 
 
 @app.route('/logout')

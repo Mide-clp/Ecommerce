@@ -57,11 +57,11 @@
                                         </a>
 
                                         <div class="product-action-vertical">
-                                            <a href="#" class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></a>
+                                            <a href="{{url_for('add_wish', wish_id=data.id)}}" class="btn-product-icon btn-wishlist btn-expandable"><span>add to wishlist</span></a>
                                         </div><!-- End .product-action -->
 
                                         <div class="product-action action-icon-top">
-                                            <a href="#" class="btn-product btn-cart"><span>add to cart</span></a>
+                                            <a href="{{url_for('add_to_cart', add_id=data.id)}}" class="btn-product btn-cart"><span>add to cart</span></a>
                                             <a href="popup/quickView.html" class="btn-product btn-quickview" title="Quick view"><span>quick view</span></a>
                                         </div><!-- End .product-action -->
                                     </figure><!-- End .product-media -->
@@ -76,7 +76,7 @@
                                         </div><!-- End .product-price -->
                                         <div class="ratings-container">
                                             <div class="ratings">
-                                                <div class="ratings-val" style="width: 0%;"></div><!-- End .ratings-val -->
+                                                 <div class="ratings-val" style="width: {{data.rating[0].number*20}}%;"></div><!-- End .ratings-val -->
                                             </div><!-- End .ratings -->
                                             <span class="ratings-text">( {{data.rating[0].number}} Reviews )</span>
                                         </div><!-- End .rating-container -->
