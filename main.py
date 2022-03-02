@@ -330,7 +330,25 @@ def shop():
 
 @app.route('/wishlist')
 def wishlist():
-    return render_template('wishlist.html', user=current_user.is_authenticated)
+    user_wish = User.query.get(current_user.id)
+    print(user_wish.wishlist)
+    try:
+        wish_items = Wishlist.query.filter_by(user_id=current_user.id).all()
+    except:
+        flash("Login to view wishlist")
+        return redirect(url_for('login'))
+
+    return render_template('wishlist.html', user=current_user.is_authenticated,
+                           user_wish=wish_items)
+
+
+@app.route('/delete-wish/<int:wish_id>')
+def delete_wishlist(wish_id):
+    wish_item = Wishlist.query.get(wish_id)
+    db.session.delete(wish_item)
+    db.session.commit()
+
+    return redirect(url_for('wishlist'))
 
 
 @app.route('/checkout')
@@ -351,14 +369,17 @@ def add_cart_or_product(add_id):
         add_cart = Cart()
         try:
             # adding to database
-            print(product.stock)
+            # print(product.stock)
             if int(product.stock) > int(request.args.get('qty')):
                 add_cart.user_id = current_user.id
                 add_cart.product_id = add_id
-                add_cart.size = request.args.get('size')
-                add_cart.qty = request.args.get('qty')
-                db.session.add(add_cart)
-                db.session.commit()
+                if request.args.get('size') == "#":
+                    flash("choose a size")
+                else:
+                    add_cart.size = request.args.get('size')
+                    add_cart.qty = request.args.get('qty')
+                    db.session.add(add_cart)
+                    db.session.commit()
             else:
                 flash("Out of stock")
                 # return redirect()
@@ -379,11 +400,14 @@ def add_cart_or_product(add_id):
             # adding to database
             if int(product.stock) > int(request.args.get('qty')):
                 add_wish_list.product_id = add_id
-                add_wish_list.size = request.args.get('size')
-                add_wish_list.qty = request.args.get('qty')
-                add_wish_list.user_id = current_user.id
-                db.session.add(add_wish_list)
-                db.session.commit()
+                if request.args.get('size') == "#":
+                    flash("choose a size")
+                else:
+                    add_wish_list.size = request.args.get('size')
+                    add_wish_list.qty = request.args.get('qty')
+                    add_wish_list.user_id = current_user.id
+                    db.session.add(add_wish_list)
+                    db.session.commit()
             else:
                 flash("Out of stock")
 
@@ -394,25 +418,40 @@ def add_cart_or_product(add_id):
     return redirect(url_for('view_product', p_id=add_id))
 
 
-@app.route('/add-cart/<int:add_id>')
+@app.route('/add-cart/<int:add_id>', methods=["GET", "POST"])
 def add_to_cart(add_id):
     new_cart = Cart()
-    try:
 
-        # adding to database
+    #  if user addcart from wishlist
 
-        new_cart.product_id = add_id
-        new_cart.size = request.args.get('size')
-        new_cart.qty = request.args.get('qty')
+    if request.method == "POST":
+
+        wish_to_add = Wishlist.query.get(add_id)
+        new_cart.product_id = wish_to_add.product_id
+        new_cart.size = wish_to_add.size
+        new_cart.qty = wish_to_add.qty
         new_cart.user_id = current_user.id
-
-    except:
-        flash("login to proceed")
-        return redirect(url_for('login'))
-
-    else:
         db.session.add(new_cart)
         db.session.commit()
+        return redirect(url_for('wishlist'))
+        # print("hello")
+    else:
+        try:
+
+            # adding to database
+
+            new_cart.product_id = add_id
+            new_cart.size = request.args.get('size')
+            new_cart.qty = request.args.get('qty')
+            new_cart.user_id = current_user.id
+
+        except:
+            flash("login to proceed")
+            return redirect(url_for('login'))
+
+        else:
+            db.session.add(new_cart)
+            db.session.commit()
 
     return redirect(url_for('shop'))
 
