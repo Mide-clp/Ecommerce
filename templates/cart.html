@@ -34,52 +34,31 @@
 									</thead>
 
 									<tbody>
+									{% for cart_item in cart_items %}
 										<tr>
 											<td class="product-col">
 												<div class="product">
 													<figure class="product-media">
-														<a href="#">
-															<img src="static/assets/images/products/table/product-1.jpg" alt="Product image">
+														<a href="{{url_for('view_product', p_id=cart_item.product.id)}}">
+															<img src="{{url_for('static', filename=cart_item.product.prod_image[0].path)}}" alt="Product image">
 														</a>
 													</figure>
 
 													<h3 class="product-title">
-														<a href="#">Beige knitted elastic runner shoes</a>
+														<a href="{{url_for('view_product', p_id=cart_item.product.id)}}">{{cart_item.product.name}}</a>
 													</h3><!-- End .product-title -->
 												</div><!-- End .product -->
 											</td>
-											<td class="price-col">$84.00</td>
+											<td class="price-col">${{cart_item.product.price}}</td>
 											<td class="quantity-col">
                                                 <div class="cart-product-quantity">
-                                                    <input type="number" class="form-control" value="1" min="1" max="10" step="1" data-decimals="0" required>
+                                                    <p style="text-align:center;">{{cart_item.qty}}</p>
                                                 </div><!-- End .cart-product-quantity -->
                                             </td>
-											<td class="total-col">$84.00</td>
-											<td class="remove-col"><button class="btn-remove"><i class="icon-close"></i></button></td>
+											<td class="total-col">${{cart_item.total}}</td>
+											<td class="remove-col"><a href="{{url_for('delete_cart_item', cart_id=cart_item.id)}}" class="btn-remove"><i class="icon-close"></i></a></td>
 										</tr>
-										<tr>
-											<td class="product-col">
-												<div class="product">
-													<figure class="product-media">
-														<a href="#">
-															<img src="static/assets/images/products/table/product-2.jpg" alt="Product image">
-														</a>
-													</figure>
-
-													<h3 class="product-title">
-														<a href="#">Blue utility pinafore denim dress</a>
-													</h3><!-- End .product-title -->
-												</div><!-- End .product -->
-											</td>
-											<td class="price-col">$76.00</td>
-											<td class="quantity-col">
-                                                <div class="cart-product-quantity">
-                                                    <input type="number" class="form-control" value="1" min="1" max="10" step="1" data-decimals="0" required>
-                                                </div><!-- End .cart-product-quantity -->                                 
-                                            </td>
-											<td class="total-col">$76.00</td>
-											<td class="remove-col"><button class="btn-remove"><i class="icon-close"></i></button></td>
-										</tr>
+									{% endfor %}
 									</tbody>
 								</table><!-- End .table table-wishlist -->
 
@@ -95,7 +74,6 @@
 			            				</form>
 			            			</div><!-- End .cart-discount -->
 
-			            			<a href="#" class="btn btn-outline-dark-2"><span>UPDATE CART</span><i class="icon-refresh"></i></a>
 		            			</div><!-- End .cart-bottom -->
 	                		</div><!-- End .col-lg-9 -->
 	                		<aside class="col-lg-3">
@@ -106,32 +84,13 @@
 	                					<tbody>
 	                						<tr class="summary-subtotal">
 	                							<td>Subtotal:</td>
-	                							<td>$160.00</td>
+	                							<td>${{cart_total}}</td>
 	                						</tr><!-- End .summary-subtotal -->
 	                						<tr class="summary-shipping">
 	                							<td>Shipping:</td>
 	                							<td>&nbsp;</td>
 	                						</tr>
 
-	                						<tr class="summary-shipping-row">
-	                							<td>
-													<div class="custom-control custom-radio">
-														<input type="radio" id="free-shipping" name="shipping" class="custom-control-input">
-														<label class="custom-control-label" for="free-shipping">Free Shipping</label>
-													</div><!-- End .custom-control -->
-	                							</td>
-	                							<td>$0.00</td>
-	                						</tr><!-- End .summary-shipping-row -->
-
-	                						<tr class="summary-shipping-row">
-	                							<td>
-	                								<div class="custom-control custom-radio">
-														<input type="radio" id="standart-shipping" name="shipping" class="custom-control-input">
-														<label class="custom-control-label" for="standart-shipping">Standart:</label>
-													</div><!-- End .custom-control -->
-	                							</td>
-	                							<td>$10.00</td>
-	                						</tr><!-- End .summary-shipping-row -->
 
 	                						<tr class="summary-shipping-row">
 	                							<td>
@@ -150,7 +109,7 @@
 
 	                						<tr class="summary-total">
 	                							<td>Total:</td>
-	                							<td>$160.00</td>
+	                							<td>${{cart_total + 20}}</td>
 	                						</tr><!-- End .summary-total -->
 	                					</tbody>
 	                				</table><!-- End .table table-summary -->
