@@ -73,6 +73,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(250), nullable=True)
     cart = relationship("Cart", back_populates="user")
     wishlist = relationship("Wishlist", back_populates="added_by")
+    orders = relationship("Order", back_populates="users")
 
 
 #
@@ -93,7 +94,6 @@ class Products(db.Model):
     rating = relationship("Rating", back_populates="product_rating")
 
 
-#
 class Category(db.Model):
     __tablename__ = "categories"
     id = db.Column(db.Integer, primary_key=True)
@@ -102,8 +102,6 @@ class Category(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=True)
 
 
-#
-#
 class Cart(db.Model):
     __tablename__ = "cart"
     id = db.Column(db.Integer, primary_key=True)
@@ -113,6 +111,8 @@ class Cart(db.Model):
     user = relationship("User", back_populates="cart")
     size = db.Column(db.String(250), nullable=True)
     qty = db.Column(db.Integer, nullable=True)
+    total = db.Column(db.Integer, nullable=True)
+    orders = relationship("Order", back_populates="cart")
 
 
 #
@@ -126,6 +126,15 @@ class Wishlist(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     product = relationship("Products", back_populates="wishlist")
     added_by = relationship("User", back_populates="wishlist")
+
+
+class Order(db.Model):
+    __tablename__ = "orders"
+    order_id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    users = relationship("User", back_populates="orders")
+    cart_id = db.Column(db.Integer, db.ForeignKey("cart.id"))
+    cart = relationship("Cart", back_populates="orders")
 
 
 class Image(db.Model):
@@ -152,9 +161,23 @@ class Rating(db.Model):
 db.create_all()
 
 
+# This function return the total number of item a user cart
+def get_total_cart(user_id):
+    wish_list = Wishlist.query.filter_by(user_id=user_id).all()
+    # print(len(wish_list))
+    return len(wish_list)
+
+
 @app.route('/')
 def home():
-    return render_template("index.html", user=current_user.is_authenticated)
+    # total item in wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    # print(total_cart_item)
+    return render_template("index.html", user=current_user.is_authenticated, wishlist_total=total_wish_item)
 
 
 @app.route('/add', methods=["GET", "POST"])
@@ -252,14 +275,27 @@ def add_product():
         else:
             flash("You uploaded an incorrect file")
             return redirect(url_for("add_product"))
-
-    return render_template("add.html", user=current_user.is_authenticated)
+    # total item in wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template("add.html", user=current_user.is_authenticated, wishlist_total=total_wish_item)
 
 
 @app.route('/preview-product')
 def preview():
     data = Products.query.all()
-    return render_template("preview.html", datas=data, user=current_user.is_authenticated)
+
+    # total item in wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template("preview.html", datas=data, user=current_user.is_authenticated,
+                           wishlist_total=total_wish_item)
 
 
 @app.route('/edit-product/<product_id>', methods=["POST", "GET"])
@@ -287,7 +323,15 @@ def edit_product(product_id):
         db.session.commit()
         return redirect(url_for("preview"))
     # print(request.form["name"])
-    return render_template("edit.html", product=update_product, user=current_user.is_authenticated)
+
+    # total item in wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template("edit.html", product=update_product, user=current_user.is_authenticated,
+                           wishlist_total=total_wish_item)
 
 
 @app.route('/delete/<product_id>')
@@ -318,28 +362,46 @@ def delete_product(product_id):
 @app.route('/product/<int:p_id>')
 def view_product(p_id):
     product = Products.query.get(p_id)
-    return render_template("product.html", product=product, user=current_user.is_authenticated)
+
+    # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template("product.html", product=product, user=current_user.is_authenticated,
+                           wishlist_total=total_wish_item)
 
 
 @app.route('/shop')
 def shop():
     data = Products.query.all()
 
-    return render_template("shop.html", datas=data, user=current_user.is_authenticated)
+    # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template("shop.html", datas=data, user=current_user.is_authenticated, wishlist_total=total_wish_item)
 
 
 @app.route('/wishlist')
 def wishlist():
-    user_wish = User.query.get(current_user.id)
-    print(user_wish.wishlist)
     try:
         wish_items = Wishlist.query.filter_by(user_id=current_user.id).all()
     except:
         flash("Login to view wishlist")
         return redirect(url_for('login'))
 
+    # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
     return render_template('wishlist.html', user=current_user.is_authenticated,
-                           user_wish=wish_items)
+                           user_wish=wish_items, wishlist_total=total_wish_item)
 
 
 @app.route('/delete-wish/<int:wish_id>')
@@ -353,17 +415,55 @@ def delete_wishlist(wish_id):
 
 @app.route('/checkout')
 def checkout():
-    return render_template('checkout.html', user=current_user.is_authenticated)
+    # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template('checkout.html', user=current_user.is_authenticated, wishlist_total=total_wish_item)
 
 
+#  link to cart page
 @app.route('/cart')
 def cart():
-    return render_template('cart.html', user=current_user.is_authenticated)
+    cart_items = ""
+    total = 0
+    try:
+        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        for item in cart_items:
+            total += item.total
+        print(total)
+    except Exception:
+        pass
+
+    # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template('cart.html', user=current_user.is_authenticated, wishlist_total=total_wish_item,
+                           cart_items=cart_items, cart_total=total)
 
 
+# delete item from cart
+@app.route('/delete-cart-item/<int:cart_id>')
+def delete_cart_item(cart_id):
+    cart_item = Cart.query.get(cart_id)
+    db.session.delete(cart_item)
+    db.session.commit()
+
+    return redirect(url_for('cart'))
+
+
+# Add new products
 @app.route('/add-cart-or-prod/<int:add_id>')
 def add_cart_or_product(add_id):
     product = Products.query.get(add_id)
+
+    # add to cart
     if request.args.get('add') == "":
         # creating item
         add_cart = Cart()
@@ -378,6 +478,7 @@ def add_cart_or_product(add_id):
                 else:
                     add_cart.size = request.args.get('size')
                     add_cart.qty = request.args.get('qty')
+                    add_cart.total = round(int(request.args.get('qty')) * float(product.price), 2)
                     db.session.add(add_cart)
                     db.session.commit()
             else:
@@ -431,6 +532,7 @@ def add_to_cart(add_id):
         new_cart.size = wish_to_add.size
         new_cart.qty = wish_to_add.qty
         new_cart.user_id = current_user.id
+        new_cart.total = (int(wish_to_add.qty) * float(wish_to_add.product.price))
         db.session.add(new_cart)
         db.session.commit()
         return redirect(url_for('wishlist'))
@@ -444,6 +546,7 @@ def add_to_cart(add_id):
             new_cart.size = request.args.get('size')
             new_cart.qty = request.args.get('qty')
             new_cart.user_id = current_user.id
+            new_cart.total = (int(request.args.get('qty')) * float(new_cart.product.price))
 
         except:
             flash("login to proceed")
@@ -452,7 +555,6 @@ def add_to_cart(add_id):
         else:
             db.session.add(new_cart)
             db.session.commit()
-
     return redirect(url_for('shop'))
 
 
@@ -523,7 +625,15 @@ def account():
 
         else:
             db.session.commit()
-    return render_template('dashboard.html', user=current_user.is_authenticated, data=user)
+
+        # get total item in a wishlist
+    total_wish_item = 0
+    try:
+        total_wish_item = get_total_cart(current_user.id)
+    except Exception:
+        pass
+    return render_template('dashboard.html', user=current_user.is_authenticated, data=user,
+                           wishlist_total=total_wish_item)
 
 
 @app.route('/login', methods=["GET", "POST"])
